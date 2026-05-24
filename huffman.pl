@@ -4,7 +4,7 @@
    Nome: Bruna Soncini
    RA:   10428267
    ====================================
- */
+*/
 
 /* 1. Lê o arquivo e retorna uma lista de caracteres */
 ler_arquivo(NomeArquivo, Caracteres) :-
@@ -172,6 +172,16 @@ codifica_texto([Caractere|RestoTexto], TabelaCodigos, TextoCodificado) :-
     junta_listas(CodigoCaractere, RestoCodificado, TextoCodificado).
 
 /* 6. Gera o arquivo 'out' */
+escreve_bits(_, []).
+
+escreve_bits(Stream, [Bit|Resto]) :-
+    write(Stream, Bit),
+    escreve_bits(Stream, Resto).
+
+gera_arquivo_out(TextoCodificado) :-
+    open('out', write, Stream),
+    escreve_bits(Stream, TextoCodificado),
+    close(Stream).
 
 /* Função principal */
 :- initialization(iniciar).
@@ -198,4 +208,7 @@ iniciar :-
 
     codifica_texto(EntradaFiltrada, TabelaCodigos, TextoCodificado),
     write('Texto codificado: '),
-    writeln(TextoCodificado).
+    writeln(TextoCodificado),
+
+    gera_arquivo_out(TextoCodificado),
+    writeln('Arquivo out gerado com sucesso.').
