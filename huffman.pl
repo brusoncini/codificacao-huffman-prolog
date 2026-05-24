@@ -160,6 +160,16 @@ monta_tabela_codigos(Arvore, TabelaFinal) :-
     corrige_codigos(TabelaInvertida, TabelaFinal).
 
 /* 5. Codifica o texto original */
+busca_codigo(Caractere, [(Caractere, Codigo)|_], Codigo).
+busca_codigo(Caractere, [_|RestoTabela], Codigo) :-
+    busca_codigo(Caractere, RestoTabela, Codigo).
+
+/* a. Codifica a lista de caracteres usando a tabela de códigos */
+codifica_texto([], _, []).
+codifica_texto([Caractere|RestoTexto], TabelaCodigos, TextoCodificado) :-
+    busca_codigo(Caractere, TabelaCodigos, CodigoCaractere),
+    codifica_texto(RestoTexto, TabelaCodigos, RestoCodificado),
+    junta_listas(CodigoCaractere, RestoCodificado, TextoCodificado).
 
 /* 6. Gera o arquivo 'out' */
 
@@ -184,4 +194,8 @@ iniciar :-
 
     monta_tabela_codigos(Arvore, TabelaCodigos),
     write('Tabela de codigos: '),
-    writeln(TabelaCodigos).
+    writeln(TabelaCodigos),
+
+    codifica_texto(EntradaFiltrada, TabelaCodigos, TextoCodificado),
+    write('Texto codificado: '),
+    writeln(TextoCodificado).
