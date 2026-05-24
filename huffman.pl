@@ -6,7 +6,6 @@
    ====================================
  */
 
-
 /* 1. Lê o arquivo e retorna uma lista de caracteres */
 ler_arquivo(NomeArquivo, Caracteres) :-
     open(NomeArquivo, read, Stream),
@@ -14,36 +13,54 @@ ler_arquivo(NomeArquivo, Caracteres) :-
     close(Stream),
     string_chars(Texto, Caracteres).
 
-/* a. Ignora espaços e quebras de linha ('\n') do arquivo */ 
+/* a. Ignora espaços e quebras de linha ('\n') do arquivo */
 filtrar([], []).
-filtrar([' '|Cs], R) :- filtrar(Cs, R).
-filtrar(['\n'|Cs], R) :- filtrar(Cs, R).
-filtrar([C|Cs], [C|R]) :- filtrar(Cs, R).
+filtrar([' '|R], SaidaFiltrada) :- filtrar(R, SaidaFiltrada).
+filtrar(['\n'|R], SaidaFiltrada) :- filtrar(R, SaidaFiltrada).
+filtrar([C|R], [C|RestoFiltrado]) :- filtrar(R, RestoFiltrado).
 
-/* 2. Cria uma tabela estatística com a quantidade de cada letra no texto
-    a. Ordena o texto por merge sort: */
+/* 2. Cria uma tabela estatística com a quantidade de cada letra no texto */
+/* a. Ordena o texto por merge sort */
 merge_sort([], []).
-merge_sort([A], [A]).
-merge_sort(L, R) :- split(L, L1, L2), merge_sort(L1, R1), merge_sort(L2, R2), intercala(R1, R2, R).
+merge_sort([E], [E]).
+merge_sort(L, ListaOrdenada) :-
+    split(L, Metade1, Metade2),
+    merge_sort(Metade1, Ordenada1),
+    merge_sort(Metade2, Ordenada2),
+    intercala(Ordenada1, Ordenada2, ListaOrdenada).
+
 
 intercala([], L, L).
 intercala(L, [], L).
-intercala([A|As], [B|Bs], [A|X]) :- A @=< B, intercala(As, [B|Bs], X).
-intercala([A|As], [B|Bs], [B|X]) :- A @> B, intercala([A|As], Bs, X).
+intercala([PrimeiroA|RestoA], [PrimeiroB|RestoB], [PrimeiroA|Resultado]) :-
+    PrimeiroA @=< PrimeiroB,
+    intercala(RestoA, [PrimeiroB|RestoB], Resultado).
+intercala([PrimeiroA|RestoA], [PrimeiroB|RestoB], [PrimeiroB|Resultado]) :-
+    PrimeiroA @> PrimeiroB,
+    intercala([PrimeiroA|RestoA], RestoB, Resultado).
 
 split([], [], []).
-split([A], [A], []).
-split([A,B|X], [A|As], [B|Bs]) :- split(X, As, Bs).
+split([E], [E], []).
+split([Primeiro, Segundo|Resto], [Primeiro|RestoMetade1], [Segundo|RestoMetade2]) :-
+    split(Resto, RestoMetade1, RestoMetade2).
+
 
 /* b. Contar cada caractere da lista ordenada (RLE) */
 conta_frequencia([], []).
-conta_frequencia([E|Es], R) :- conta_frequencia(Es, E, 1, R).
-conta_frequencia([], E, N, [(E, N)]).
-conta_frequencia([E|Es], E, N, R) :- N2 is N + 1, conta_frequencia(Es, E, N2, R).
-conta_frequencia([A|As], E, N, [(E, N)|R]) :- conta_frequencia(As, A, 1, R).
+conta_frequencia([PrimeiroCaractere|Resto], TabelaFrequencia) :-
+    conta_frequencia(Resto, PrimeiroCaractere, 1, TabelaFrequencia).
 
-/* 3. Cria a árvore de Huffman 
-    a. Transforma a tabela de frequência em uma lista de folhas */
+conta_frequencia([], CaractereAtual, QuantidadeAtual, [(CaractereAtual, QuantidadeAtual)]).
+
+conta_frequencia([CaractereAtual|Resto], CaractereAtual, QuantidadeAtual, TabelaFrequencia) :-
+    NovaQuantidade is QuantidadeAtual + 1,
+    conta_frequencia(Resto, CaractereAtual, NovaQuantidade, TabelaFrequencia).
+
+conta_frequencia([NovoCaractere|Resto], CaractereAtual, QuantidadeAtual, [(CaractereAtual, QuantidadeAtual)|TabelaFrequencia]) :-
+    conta_frequencia(Resto, NovoCaractere, 1, TabelaFrequencia).
+
+/* 3. Cria a árvore de Huffman */
+/* a. Transforma a tabela de frequência em uma lista de folhas */
 cria_folhas([], []).
 cria_folhas([(Caractere, Frequencia)|Resto], [folha(Caractere, Frequencia)|Folhas]) :-
     cria_folhas(Resto, Folhas).
@@ -112,6 +129,35 @@ imprime_espacos(N) :-
     imprime_espacos(N2).
 
 /* 4. Cria a tabela dos códigos para cada símbolo */
+cria_tabela_codigos(folha(Caractere, _), [(Caractere, [0])]).
+cria_tabela_codigos(Arvore, Tabela) :-
+    cria_tabela_codigos(Arvore, [], Tabela).
+cria_tabela_codigos(folha(Caractere, _), Caminho, [(Caractere, Caminho)]).
+
+/* a. Para nó interno, percorre esquerda com 0 e direita com 1 */
+cria_tabela_codigos(no(_, Esquerda, Direita), Caminho, Tabela) :-
+    cria_tabela_codigos(Esquerda, [0|Caminho], TabelaEsquerda),
+    cria_tabela_codigos(Direita, [1|Caminho], TabelaDireita),
+    junta_listas(TabelaEsquerda, TabelaDireita, Tabela).
+
+junta_listas([], L, L).
+junta_listas([X|Xs], L, [X|R]) :-
+    junta_listas(Xs, L, R).
+
+inverte_lista(Lista, Invertida) :- inverte_lista(Lista, [], Invertida).
+inverte_lista([], Acumulador, Acumulador).
+inverte_lista([X|Xs], Acumulador, Invertida) :-
+    inverte_lista(Xs, [X|Acumulador], Invertida).
+
+/* b. Inverte todos os códigos da tabela */
+corrige_codigos([], []).
+corrige_codigos([(Caractere, CodigoInvertido)|Resto], [(Caractere, Codigo)|TabelaFinal]) :-
+    inverte_lista(CodigoInvertido, Codigo),
+    corrige_codigos(Resto, TabelaFinal).
+
+monta_tabela_codigos(Arvore, TabelaFinal) :-
+    cria_tabela_codigos(Arvore, TabelaInvertida),
+    corrige_codigos(TabelaInvertida, TabelaFinal).
 
 /* 5. Codifica o texto original */
 
@@ -134,4 +180,8 @@ iniciar :-
 
     monta_arvore_huffman(Frequencia, Arvore),
     write('Arvore de Huffman: '),
-    imprime_arvore(Arvore, 0).
+    imprime_arvore(Arvore, 0),
+
+    monta_tabela_codigos(Arvore, TabelaCodigos),
+    write('Tabela de codigos: '),
+    writeln(TabelaCodigos).
