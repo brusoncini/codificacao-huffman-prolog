@@ -2,21 +2,11 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Prolog-SWI--Prolog-blue">
-  <img src="https://img.shields.io/badge/status-em%20andamento-yellow">
+  <img src="https://img.shields.io/badge/status-concluído-green">
   <img src="https://img.shields.io/badge/tipo-projeto%20acadêmico-purple">
 </p>
 
 Implementação do algoritmo de **Codificação de Huffman** em Prolog para a disciplina de Paradigmas de Programação.
-
-
-## 🚧 Status do Projeto
-
-O projeto ainda está em desenvolvimento.
-
-Etapas atualmente em andamento:
-- Contagem de frequência dos caracteres
-- Estruturação da árvore de Huffman
-- Geração da tabela binária de códigos
 
 
 ## 🎯 Objetivo
